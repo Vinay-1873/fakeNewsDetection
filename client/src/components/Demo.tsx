@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { AlertTriangleIcon, CheckCircle2Icon, LoaderCircleIcon, RadarIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import Title from './Title';
 import { PrimaryButton, GhostButton } from './Buttons';
 import { toast } from 'react-hot-toast';
@@ -14,7 +15,9 @@ interface NormalizedPrediction {
     explanation: string;
 }
 
-const API_ENDPOINT = import.meta.env.VITE_ML_API_ENDPOINT ?? 'http://127.0.0.1:8000/predict';
+const API_ENDPOINT = import.meta.env.VITE_ML_API_ENDPOINT ?? 'http://127.0.0.1:8001/predict';
+const GUEST_DEMO_LIMIT = 3;
+const GUEST_DEMO_COUNT_KEY = 'verilens_demo_guest_uses';
 
 function normalizePrediction(data: unknown): NormalizedPrediction {
     const obj = (typeof data === 'object' && data !== null ? data : {}) as Record<string, unknown>;
@@ -54,6 +57,7 @@ function normalizePrediction(data: unknown): NormalizedPrediction {
 
 export default function Demo() {
     const { isDark } = useTheme();
+    const navigate = useNavigate();
     const [text, setText] = useState('Breaking: Scientists confirm moonlight cures all diseases overnight.');
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<NormalizedPrediction | null>(null);
@@ -71,6 +75,30 @@ export default function Demo() {
             const message = 'Please enter a headline or article text first.';
             toast.error(message);
             return;
+        }
+
+        const token = localStorage.getItem('verilens_token');
+        const rawSession = localStorage.getItem('verilens_session');
+        let hasUser = false;
+
+        if (rawSession) {
+            try {
+                const parsed = JSON.parse(rawSession) as { user?: unknown };
+                hasUser = !!parsed.user;
+            } catch {
+                hasUser = false;
+            }
+        }
+
+        const isLoggedIn = !!token && hasUser;
+
+        if (!isLoggedIn) {
+            const currentCount = Number(localStorage.getItem(GUEST_DEMO_COUNT_KEY) ?? '0');
+            if (currentCount >= GUEST_DEMO_LIMIT) {
+                toast.error('Demo limit reached. Please log in to continue.', { id: 'demo-login-required' });
+                navigate('/login');
+                return;
+            }
         }
 
         setLoading(true);
@@ -91,6 +119,12 @@ export default function Demo() {
             const payload: unknown = await response.json();
             const normalized = normalizePrediction(payload);
             setResult(normalized);
+
+            if (!isLoggedIn) {
+                const currentCount = Number(localStorage.getItem(GUEST_DEMO_COUNT_KEY) ?? '0');
+                localStorage.setItem(GUEST_DEMO_COUNT_KEY, String(currentCount + 1));
+            }
+
             toast.success(`Analysis complete: ${normalized.verdict}`);
         } catch {
             const message = `Could not reach API at ${API_ENDPOINT}. Check your backend URL and CORS settings.`;

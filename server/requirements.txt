@@ -8,3 +8,4 @@ pymongo==4.12.1
 passlib==1.7.4
 python-jose[cryptography]==3.3.0
 cloudinary==1.44.1
+stripe==12.5.0

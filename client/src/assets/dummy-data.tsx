@@ -23,6 +23,7 @@ export const plansData = [
         id: 'starter',
         name: 'Starter',
         price: '$0',
+        current: true,
         desc: 'For students and small content teams.',
         credits: 'month',
         features: [

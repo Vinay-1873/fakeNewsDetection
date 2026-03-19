@@ -16,7 +16,7 @@ interface AuthResponse {
     };
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8001';
 
 export default function Login() {
     const [email, setEmail] = useState('');
@@ -70,7 +70,7 @@ export default function Login() {
     };
 
     return (
-        <main className={`min-h-screen flex items-center justify-center px-4 py-16 relative overflow-hidden ${
+        <main className={`min-h-screen flex items-center justify-center px-4 pt-28 pb-16 md:pt-32 relative overflow-hidden ${
             isDark ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-900'
         }`}>
             <SoftBackdrop />

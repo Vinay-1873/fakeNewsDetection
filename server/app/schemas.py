@@ -5,6 +5,10 @@ class PredictRequest(BaseModel):
     text: str = Field(..., min_length=5, description='Headline or article text to classify')
 
 
+class UrlAnalyzeRequest(BaseModel):
+    url: str = Field(..., min_length=8, max_length=2000, description='Website URL to analyze')
+
+
 class PredictResponse(BaseModel):
     label: str = Field(..., description='Prediction label: FAKE, REAL, or UNCERTAIN')
     confidence: float = Field(..., ge=0.0, le=1.0, description='Confidence score between 0 and 1')
@@ -32,6 +36,7 @@ class AuthUser(BaseModel):
     full_name: str
     email: str
     profile_image: str | None = None
+    subscription_plan: str = Field(default='starter')
 
 
 class AuthResponse(BaseModel):
@@ -63,3 +68,16 @@ class TestimonialItem(BaseModel):
 
 class TestimonialListResponse(BaseModel):
     items: list[TestimonialItem]
+
+
+class StripeCheckoutSessionRequest(BaseModel):
+    plan_id: str = Field(default='pro', min_length=2, max_length=50)
+
+
+class StripeCheckoutSessionResponse(BaseModel):
+    session_id: str
+    checkout_url: str
+
+
+class StripeCheckoutConfirmRequest(BaseModel):
+    session_id: str = Field(..., min_length=5, max_length=200)

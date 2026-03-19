@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { CameraIcon, Trash2Icon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import Cropper, { type Area } from 'react-easy-crop';
@@ -12,6 +12,7 @@ interface SessionUser {
     full_name: string;
     email: string;
     profile_image?: string | null;
+    subscription_plan?: 'starter' | 'pro' | 'ultra';
 }
 
 interface SessionData {
@@ -25,7 +26,7 @@ interface AuthResponse {
     user: SessionUser;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8001';
 
 function createImage(url: string): Promise<HTMLImageElement> {
     return new Promise((resolve, reject) => {
@@ -69,6 +70,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(true);
     const [isUpdatingPic, setIsUpdatingPic] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
     const [crop, setCrop] = useState({ x: 0, y: 0 });
     const [zoom, setZoom] = useState(1.2);
@@ -76,6 +78,7 @@ export default function Profile() {
     const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
     const fileInputRef = useRef<HTMLInputElement | null>(null);
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const { isDark } = useTheme();
 
     useEffect(() => {
@@ -102,6 +105,120 @@ export default function Profile() {
             setLoading(false);
         }
     }, [navigate]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('verilens_token');
+        if (!token) {
+            return;
+        }
+
+        const refreshCurrentUser = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/auth/me`, {
+                    method: 'GET',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const payload = (await response.json()) as Partial<AuthResponse> & { detail?: string };
+                if (response.status === 401 || payload.detail === 'Invalid or expired token.') {
+                    handleExpiredSession();
+                    return;
+                }
+
+                if (!response.ok || !payload.access_token || !payload.user || !payload.token_type) {
+                    return;
+                }
+
+                syncSession(payload as AuthResponse);
+            } catch {
+                // Keep current session state when background refresh fails.
+            }
+        };
+
+        void refreshCurrentUser();
+    }, [navigate]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('verilens_token');
+        if (!token) {
+            return;
+        }
+
+        const syncSubscriptionPlan = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/billing/sync-subscription-plan`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${token}`,
+                    },
+                });
+
+                const payload = (await response.json()) as Partial<AuthResponse> & { detail?: string };
+                if (response.status === 401 || payload.detail === 'Invalid or expired token.') {
+                    handleExpiredSession();
+                    return;
+                }
+
+                if (!response.ok || !payload.access_token || !payload.user || !payload.token_type) {
+                    return;
+                }
+
+                syncSession(payload as AuthResponse);
+            } catch {
+                // Keep current session state when background sync fails.
+            }
+        };
+
+        void syncSubscriptionPlan();
+    }, [navigate]);
+
+    useEffect(() => {
+        const checkoutStatus = searchParams.get('checkout');
+        const sessionId = searchParams.get('session_id');
+        if (checkoutStatus !== 'success' || !sessionId) {
+            return;
+        }
+
+        const token = localStorage.getItem('verilens_token');
+        if (!token) {
+            return;
+        }
+
+        const confirmCheckout = async () => {
+            try {
+                const response = await fetch(`${API_BASE_URL}/billing/confirm-checkout-session`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({ session_id: sessionId }),
+                });
+
+                const payload = (await response.json()) as Partial<AuthResponse> & { detail?: string };
+
+                if (response.status === 401 || payload.detail === 'Invalid or expired token.') {
+                    handleExpiredSession();
+                    return;
+                }
+
+                if (!response.ok || !payload.access_token || !payload.user || !payload.token_type) {
+                    toast.error(payload.detail ?? 'Could not confirm your payment.');
+                    return;
+                }
+
+                syncSession(payload as AuthResponse);
+                toast.success('Payment confirmed. Your plan has been updated.');
+                setSearchParams({}, { replace: true });
+            } catch {
+                toast.error('Could not confirm your payment right now.');
+            }
+        };
+
+        void confirmCheckout();
+    }, [searchParams, setSearchParams]);
 
     const syncSession = (payload: AuthResponse) => {
         localStorage.setItem('verilens_token', payload.access_token);
@@ -228,12 +345,6 @@ export default function Profile() {
             return;
         }
 
-        const confirmed = window.confirm('Delete Account permanently? This action cannot be undone.');
-        if (!confirmed) {
-            toast('Delete Account canceled.');
-            return;
-        }
-
         try {
             setIsDeleting(true);
             const response = await fetch(`${API_BASE_URL}/auth/delete-account`, {
@@ -262,6 +373,7 @@ export default function Profile() {
             toast.error('Unable to delete account right now.');
         } finally {
             setIsDeleting(false);
+            setShowDeleteConfirm(false);
         }
     };
 
@@ -272,6 +384,9 @@ export default function Profile() {
             </main>
         );
     }
+
+    const currentPlan = user?.subscription_plan ?? 'starter';
+    const planLabel = currentPlan === 'pro' ? 'Pro' : currentPlan === 'ultra' ? 'Enterprise' : 'Starter';
 
     return (
         <main className={`min-h-screen relative overflow-hidden px-4 py-14 md:py-18 ${isDark ? 'bg-gray-950 text-white' : 'bg-slate-50 text-slate-900'}`}>
@@ -328,6 +443,19 @@ export default function Profile() {
                                     <div>
                                         <p className='text-2xl font-semibold'>{user?.full_name}</p>
                                         <p className={`text-sm mt-1 ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>{user?.email}</p>
+                                        <div className='mt-3'>
+                                            <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-medium ${
+                                                currentPlan === 'starter'
+                                                    ? isDark
+                                                        ? 'border-gray-500/40 bg-gray-500/10 text-gray-200'
+                                                        : 'border-slate-300 bg-slate-100 text-slate-700'
+                                                    : isDark
+                                                        ? 'border-emerald-400/40 bg-emerald-500/10 text-emerald-200'
+                                                        : 'border-emerald-300 bg-emerald-100 text-emerald-700'
+                                            }`}>
+                                                {planLabel} Plan
+                                            </span>
+                                        </div>
                                         <p className={`text-xs mt-3 ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>Use this section to keep your account identity and access up to date.</p>
                                     </div>
                                 </div>
@@ -347,6 +475,16 @@ export default function Profile() {
                                     <div className={`flex items-center justify-between rounded-xl px-3 py-2 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
                                         <span>Support</span>
                                         <span className='text-sky-300'>24/7</span>
+                                    </div>
+                                    <div className={`flex items-center justify-between rounded-xl px-3 py-2 ${isDark ? 'bg-white/5' : 'bg-slate-100'}`}>
+                                        <span>Subscription</span>
+                                        <span className={`${
+                                            currentPlan === 'starter'
+                                                ? isDark
+                                                    ? 'text-gray-300'
+                                                    : 'text-slate-700'
+                                                : 'text-emerald-300'
+                                        }`}>{planLabel}</span>
                                     </div>
                                 </div>
                             </div>
@@ -370,7 +508,7 @@ export default function Profile() {
                                 </GhostButton>
 
                                 <button
-                                    onClick={deleteAccount}
+                                    onClick={() => setShowDeleteConfirm(true)}
                                     disabled={isDeleting}
                                     className={`inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-medium border transition disabled:opacity-60 ${
                                         isDark
@@ -462,6 +600,39 @@ export default function Profile() {
                                 <PrimaryButton onClick={confirmAndUploadCroppedImage} disabled={isUpdatingPic} className='px-5 py-2.5 disabled:opacity-60'>
                                     {isUpdatingPic ? 'Uploading...' : 'Crop & Upload'}
                                 </PrimaryButton>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {showDeleteConfirm && (
+                    <div className='fixed inset-0 z-[130] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4'>
+                        <div className={`w-full max-w-md rounded-2xl border p-5 md:p-6 ${isDark ? 'bg-slate-950 border-white/10' : 'bg-white border-slate-200'}`}>
+                            <h2 className='text-lg font-semibold'>Delete account?</h2>
+                            <p className={`text-sm mt-2 ${isDark ? 'text-gray-400' : 'text-slate-600'}`}>
+                                Are you sure you want to delete your account? This action cannot be undone.
+                            </p>
+
+                            <div className='mt-5 flex justify-end gap-3'>
+                                <GhostButton
+                                    onClick={() => setShowDeleteConfirm(false)}
+                                    className='px-5 py-2.5'
+                                    disabled={isDeleting}
+                                >
+                                    Cancel
+                                </GhostButton>
+
+                                <button
+                                    onClick={deleteAccount}
+                                    disabled={isDeleting}
+                                    className={`inline-flex items-center rounded-full px-5 py-2.5 text-sm font-medium border transition disabled:opacity-60 ${
+                                        isDark
+                                            ? 'border-rose-400/40 bg-rose-500/15 hover:bg-rose-500/25 text-rose-200'
+                                            : 'border-rose-300 bg-rose-100 hover:bg-rose-200 text-rose-700'
+                                    }`}
+                                >
+                                    {isDeleting ? 'Deleting...' : 'Yes, delete account'}
+                                </button>
                             </div>
                         </div>
                     </div>

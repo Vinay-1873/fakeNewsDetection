@@ -39,5 +39,10 @@ class Settings:
     CLOUDINARY_API_SECRET = os.getenv('CLOUDINARY_API_SECRET', '')
     CLOUDINARY_PROFILE_FOLDER = os.getenv('CLOUDINARY_PROFILE_FOLDER', 'verilens/profiles')
 
+    CLIENT_APP_URL = os.getenv('CLIENT_APP_URL', 'http://127.0.0.1:5173')
+    STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY', '')
+    STRIPE_PRICE_ID_PRO = os.getenv('STRIPE_PRICE_ID_PRO', '')
+    STRIPE_PRICE_ID_CUSTOM = os.getenv('STRIPE_PRICE_ID_CUSTOM', '')
+
 
 settings = Settings()

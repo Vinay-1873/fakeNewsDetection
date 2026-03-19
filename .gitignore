@@ -3,6 +3,9 @@ node_modules/
 client/node_modules/
 client/dist/
 client/dist-ssr/
+client/.vite/
+client/coverage/
+coverage/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -21,6 +24,13 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tox/
+.nox/
+.coverage
+.coverage.*
+htmlcov/
+server/htmlcov/
+pip-wheel-metadata/
 
 # ----- Environment & Secrets -----
 .env
@@ -45,3 +55,12 @@ Thumbs.db
 server/models/*.joblib
 server/models/*.pkl
 *.sqlite3
+*.pid
+*.pid.lock
+*.seed
+
+# ----- Misc local tooling -----
+.cache/
+.ipynb_checkpoints/
+tmp/
+temp/

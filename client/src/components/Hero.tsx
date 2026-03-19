@@ -55,14 +55,14 @@ export default function Hero() {
                                 viewport={{ once: true }}
                                 transition={{ type: "spring", stiffness: 250, damping: 70, mass: 1, delay: 0.3 }}
                             >
-                                <a href="/#demo" className="w-full sm:w-auto">
+                                <a href="/analyze" className="w-full sm:w-auto">
                                     <PrimaryButton className="max-sm:w-full py-3 px-7">
                                         Start free analysis
                                         <ArrowRightIcon className="size-4" />
                                     </PrimaryButton>
                                 </a>
 
-                                <a href="/#demo" className="w-full sm:w-auto">
+                                <a href="/analyze" className="w-full sm:w-auto">
                                     <GhostButton className="max-sm:w-full max-sm:justify-center py-3 px-5">
                                         <PlayIcon className="size-4" />
                                         Watch demo
@@ -128,7 +128,7 @@ export default function Hero() {
                                     </div>
 
                                     <div className="absolute right-4 bottom-4">
-                                        <a href="/#demo" className={`inline-flex items-center gap-2 rounded-full px-4 py-2 backdrop-blur-sm transition focus:outline-none ${
+                                        <a href="/analyze" className={`inline-flex items-center gap-2 rounded-full px-4 py-2 backdrop-blur-sm transition focus:outline-none ${
                                             isDark ? 'bg-white/6 hover:bg-white/10 text-white' : 'bg-white/90 hover:bg-white text-slate-700 border border-slate-200'
                                         }`}>
                                             <PlayIcon className="size-4" />

@@ -28,7 +28,7 @@ interface TestimonialListResponse {
     items: TestimonialCard[];
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8001';
 
 const cardsData: TestimonialCard[] = [
     {
@@ -207,15 +207,7 @@ export default function Testimonials() {
                 </div>
             </div>
             <p className={`text-sm py-4 ${isDark ? 'text-gray-200' : 'text-gray-800'}`}>{card.text}</p>
-            <div className={`flex items-center justify-between text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                <div className="flex items-center gap-1">
-                    <span>Posted on</span>
-                    <a href="https://x.com" target="_blank" rel="noreferrer" className="hover:text-sky-500">
-                        <svg width="11" height="10" viewBox="0 0 11 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="m.027 0 4.247 5.516L0 10h.962l3.742-3.926L7.727 10H11L6.514 4.174 10.492 0H9.53L6.084 3.616 3.3 0zM1.44.688h1.504l6.64 8.624H8.082z" fill="currentColor" />
-                        </svg>
-                    </a>
-                </div>
+            <div className={`flex items-center justify-end text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
                 <p>{card.date}</p>
             </div>
         </div>

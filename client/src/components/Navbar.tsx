@@ -3,7 +3,7 @@ import { PrimaryButton } from './Buttons';
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import Brand from './Brand';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '../context/theme';
 
@@ -24,16 +24,19 @@ export default function Navbar() {
     const [isProfileOpen, setIsProfileOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate();
+    const { pathname } = useLocation();
     const { isDark, toggleTheme } = useTheme();
 
     const navLinks = [
         { name: 'Home', href: '/#' },
+        { name: 'Analyze', href: '/analyze' },
         { name: 'Demo', href: '/#demo' },
-        { name: 'Features', href: '/#features' },
-        { name: 'Pricing', href: '/#pricing' },
         { name: 'Testimonials', href: '/#testimonials' },
         { name: 'FAQ', href: '/#faq' },
     ];
+    const visibleNavLinks = pathname === '/analyze'
+        ? navLinks.filter((link) => link.name !== 'Demo')
+        : navLinks;
 
     useEffect(() => {
         const rawSession = localStorage.getItem('verilens_session');
@@ -48,7 +51,7 @@ export default function Navbar() {
         } catch {
             setSessionUser(null);
         }
-    }, []);
+    }, [pathname]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -94,7 +97,7 @@ export default function Navbar() {
                 </a>
 
                 <div className={`hidden md:flex items-center gap-8 text-sm font-medium ${isDark ? 'text-gray-300' : 'text-slate-700'}`}>
-                    {navLinks.map((link) => (
+                    {visibleNavLinks.map((link) => (
                         <a href={link.href} key={link.name} className={`transition ${isDark ? 'hover:text-white' : 'hover:text-slate-900'}`}>
                             {link.name}
                         </a>
@@ -189,7 +192,7 @@ export default function Navbar() {
             <div className={`flex flex-col items-center justify-center gap-6 text-lg font-medium fixed inset-0 backdrop-blur-md z-50 transition-all duration-300 ${
                 isDark ? 'bg-black/40 text-gray-100' : 'bg-white/70 text-slate-800'
             } ${isOpen ? "translate-x-0" : "translate-x-full"}`}>
-                {navLinks.map((link) => (
+                {visibleNavLinks.map((link) => (
                     <a key={link.name} href={link.href} onClick={() => setIsOpen(false)}>
                         {link.name}
                     </a>

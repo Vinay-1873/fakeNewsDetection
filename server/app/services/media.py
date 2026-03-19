@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-import cloudinary
-import cloudinary.uploader
+try:
+    import cloudinary
+    import cloudinary.uploader
+except Exception:  # pragma: no cover
+    cloudinary = None
 
 from app.config import settings
 
@@ -13,7 +16,7 @@ cloudinary_enabled = all(
     ]
 )
 
-if cloudinary_enabled:
+if cloudinary_enabled and cloudinary is not None:
     cloudinary.config(
         cloud_name=settings.CLOUDINARY_CLOUD_NAME,
         api_key=settings.CLOUDINARY_API_KEY,
@@ -24,7 +27,7 @@ if cloudinary_enabled:
 
 def upload_profile_image(image_data: str) -> str:
     """Upload profile image to Cloudinary when configured, otherwise return incoming data."""
-    if not cloudinary_enabled:
+    if not cloudinary_enabled or cloudinary is None:
         return image_data
 
     result = cloudinary.uploader.upload(

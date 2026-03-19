@@ -1,3 +1,5 @@
+import { Toaster } from 'react-hot-toast';
+import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import SoftBackdrop from './components/SoftBackdrop';
@@ -6,18 +8,34 @@ import LenisScroll from './components/lenis';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Profile from './pages/Profile';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import Analyze from './pages/Analyze';
 import { ThemeProvider, useTheme } from './context/theme';
-import { Toaster } from 'react-hot-toast';
 
 function LandingPage() {
 	return (
 		<>
 			<SoftBackdrop />
 			<LenisScroll />
-			<Navbar />
 			<Home />
 			<Footer />
+		</>
+	);
+}
+
+function AppRoutes() {
+	const { pathname } = useLocation();
+	const showNavbar = pathname !== '/profile';
+
+	return (
+		<>
+			{showNavbar && <Navbar />}
+			<Routes>
+				<Route path='/' element={<LandingPage />} />
+				<Route path='/analyze' element={<Analyze />} />
+				<Route path='/login' element={<Login />} />
+				<Route path='/signup' element={<Signup />} />
+				<Route path='/profile' element={<Profile />} />
+			</Routes>
 		</>
 	);
 }
@@ -27,7 +45,8 @@ function ThemedToaster() {
 
 	return (
 		<Toaster
-			position='top-right'
+			position='top-center'
+			containerStyle={{ top: 88 }}
 			toastOptions={{
 				style: {
 					background: isDark ? '#0f172a' : '#ffffff',
@@ -46,14 +65,10 @@ function App() {
 		<ThemeProvider>
 			<ThemedToaster />
 			<BrowserRouter>
-				<Routes>
-					<Route path="/" element={<LandingPage />} />
-					<Route path="/login" element={<Login />} />
-					<Route path="/signup" element={<Signup />} />
-					<Route path="/profile" element={<Profile />} />
-				</Routes>
+				<AppRoutes />
 			</BrowserRouter>
 		</ThemeProvider>
 	);
 }
+
 export default App;
