@@ -1,8 +1,10 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+BASE_DIR = Path(__file__).resolve().parent.parent
+load_dotenv(dotenv_path=BASE_DIR / '.env')
 
 
 def _split_csv(raw: str) -> list[str]:
@@ -21,7 +23,12 @@ class Settings:
     PORT = int(os.getenv('PORT', '8000'))
 
     MODEL_PATH = os.getenv('MODEL_PATH', 'models/model.joblib')
+    if not os.path.isabs(MODEL_PATH):
+        MODEL_PATH = str(BASE_DIR / MODEL_PATH)
+
     VECTORIZER_PATH = os.getenv('VECTORIZER_PATH', 'models/vectorizer.joblib')
+    if not os.path.isabs(VECTORIZER_PATH):
+        VECTORIZER_PATH = str(BASE_DIR / VECTORIZER_PATH)
 
     CORS_ORIGINS = _split_csv(
         os.getenv('CORS_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173')
