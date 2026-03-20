@@ -1,5 +1,5 @@
 import { ArrowRightIcon, PlayIcon, ZapIcon, CheckIcon } from 'lucide-react';
-import { PrimaryButton, GhostButton } from './Buttons';
+import { PrimaryButton } from './Buttons';
 import { motion } from 'framer-motion';
 import { useTheme } from '../context/theme';
 
@@ -60,13 +60,6 @@ export default function Hero() {
                                         Start free analysis
                                         <ArrowRightIcon className="size-4" />
                                     </PrimaryButton>
-                                </a>
-
-                                <a href="/analyze" className="w-full sm:w-auto">
-                                    <GhostButton className="max-sm:w-full max-sm:justify-center py-3 px-5">
-                                        <PlayIcon className="size-4" />
-                                        Watch demo
-                                    </GhostButton>
                                 </a>
                             </motion.div>
 
