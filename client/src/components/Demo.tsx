@@ -6,6 +6,7 @@ import Title from './Title';
 import { PrimaryButton, GhostButton } from './Buttons';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '../context/theme';
+import { getValidSession } from '../utils/session';
 
 type Verdict = 'FAKE' | 'REAL' | 'UNCERTAIN';
 
@@ -78,17 +79,8 @@ export default function Demo() {
         }
 
         const token = localStorage.getItem('verilens_token');
-        const rawSession = localStorage.getItem('verilens_session');
-        let hasUser = false;
-
-        if (rawSession) {
-            try {
-                const parsed = JSON.parse(rawSession) as { user?: unknown };
-                hasUser = !!parsed.user;
-            } catch {
-                hasUser = false;
-            }
-        }
+        const session = getValidSession<{ id?: string }>();
+        const hasUser = !!session?.user;
 
         const isLoggedIn = !!token && hasUser;
 

@@ -4,15 +4,12 @@ import { toast } from 'react-hot-toast';
 import Title from './Title';
 import { PrimaryButton } from './Buttons';
 import { useTheme } from '../context/theme';
+import { clearAuthSession, getValidSession } from '../utils/session';
 
 interface SessionUser {
     full_name: string;
     email: string;
     profile_image?: string | null;
-}
-
-interface SessionData {
-    user?: SessionUser;
 }
 
 interface TestimonialCard {
@@ -66,17 +63,8 @@ const cardsData: TestimonialCard[] = [
 ];
 
 function getSessionUser(): SessionUser | null {
-    const rawSession = localStorage.getItem('verilens_session');
-    if (!rawSession) {
-        return null;
-    }
-
-    try {
-        const parsed = JSON.parse(rawSession) as SessionData;
-        return parsed.user ?? null;
-    } catch {
-        return null;
-    }
+    const parsed = getValidSession<SessionUser>();
+    return parsed?.user ?? null;
 }
 
 export default function Testimonials() {
@@ -87,8 +75,7 @@ export default function Testimonials() {
     const [posting, setPosting] = useState(false);
 
     const clearExpiredSession = () => {
-        localStorage.removeItem('verilens_token');
-        localStorage.removeItem('verilens_session');
+        clearAuthSession();
         setSessionUser(null);
         toast.error('Session expired. Please log in again.');
     };

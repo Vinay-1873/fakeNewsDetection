@@ -1,10 +1,12 @@
-import { useMemo, useState, type ChangeEvent } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { AlertTriangleIcon, CheckCircle2Icon, ImageIcon, LinkIcon, LoaderCircleIcon, TextIcon, UploadCloudIcon } from 'lucide-react';
 import Tesseract from 'tesseract.js';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 import SoftBackdrop from '../components/SoftBackdrop';
 import { PrimaryButton } from '../components/Buttons';
 import { useTheme } from '../context/theme';
+import { getValidSession } from '../utils/session';
 
 type InputMode = 'text' | 'url' | 'image';
 type Verdict = 'FAKE' | 'REAL' | 'UNCERTAIN';
@@ -54,6 +56,7 @@ function normalizePrediction(data: unknown): PredictionResult {
 
 export default function Analyze() {
     const { isDark } = useTheme();
+    const navigate = useNavigate();
     const [mode, setMode] = useState<InputMode>('text');
     const [textInput, setTextInput] = useState('');
     const [urlInput, setUrlInput] = useState('');
@@ -68,6 +71,15 @@ export default function Analyze() {
         }
         return `${result.confidence.toFixed(1)}%`;
     }, [result]);
+
+    useEffect(() => {
+        const token = localStorage.getItem('verilens_token');
+        const session = getValidSession();
+
+        if (!token || !session?.user) {
+            navigate('/login', { replace: true });
+        }
+    }, [navigate]);
 
     const verdictStyle = useMemo(() => {
         if (!result) {

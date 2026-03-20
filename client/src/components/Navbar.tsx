@@ -6,16 +6,12 @@ import Brand from './Brand';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { useTheme } from '../context/theme';
+import { clearAuthSession, getValidSession } from '../utils/session';
 
 interface SessionUser {
     full_name: string;
     email: string;
     profile_image?: string | null;
-}
-
-interface SessionData {
-    user?: SessionUser;
-    tokenType?: string;
 }
 
 export default function Navbar() {
@@ -39,18 +35,13 @@ export default function Navbar() {
         : navLinks;
 
     useEffect(() => {
-        const rawSession = localStorage.getItem('verilens_session');
-        if (!rawSession) {
+        const session = getValidSession<SessionUser>();
+        if (!session?.user) {
             setSessionUser(null);
             return;
         }
 
-        try {
-            const session = JSON.parse(rawSession) as SessionData;
-            setSessionUser(session.user ?? null);
-        } catch {
-            setSessionUser(null);
-        }
+        setSessionUser(session.user);
     }, [pathname]);
 
     useEffect(() => {
@@ -69,8 +60,7 @@ export default function Navbar() {
     }, []);
 
     const logout = () => {
-        localStorage.removeItem('verilens_token');
-        localStorage.removeItem('verilens_session');
+        clearAuthSession();
         setSessionUser(null);
         setIsProfileOpen(false);
         setIsOpen(false);

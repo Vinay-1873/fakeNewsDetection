@@ -1,5 +1,5 @@
 import { Toaster } from 'react-hot-toast';
-import { BrowserRouter, Route, Routes, useLocation } from 'react-router-dom';
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Home from './pages/Home';
 import SoftBackdrop from './components/SoftBackdrop';
@@ -10,6 +10,18 @@ import Signup from './pages/Signup';
 import Profile from './pages/Profile';
 import Analyze from './pages/Analyze';
 import { ThemeProvider, useTheme } from './context/theme';
+import { getValidSession } from './utils/session';
+
+function ProtectedRoute({ children }: { children: React.ReactElement }) {
+	const session = getValidSession();
+	const isLoggedIn = Boolean(session?.user && localStorage.getItem('verilens_token'));
+
+	if (!isLoggedIn) {
+		return <Navigate to='/login' replace />;
+	}
+
+	return children;
+}
 
 function LandingPage() {
 	return (
@@ -31,7 +43,7 @@ function AppRoutes() {
 			{showNavbar && <Navbar />}
 			<Routes>
 				<Route path='/' element={<LandingPage />} />
-				<Route path='/analyze' element={<Analyze />} />
+				<Route path='/analyze' element={<ProtectedRoute><Analyze /></ProtectedRoute>} />
 				<Route path='/login' element={<Login />} />
 				<Route path='/signup' element={<Signup />} />
 				<Route path='/profile' element={<Profile />} />

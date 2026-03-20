@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTheme } from '../context/theme';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { clearAuthSession, getValidSession } from '../utils/session';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8001';
 
@@ -16,10 +17,6 @@ interface SessionUser {
     subscription_plan?: PlanId;
 }
 
-interface SessionData {
-    user?: SessionUser;
-}
-
 export default function Pricing() {
     const refs = useRef<(HTMLDivElement | null)[]>([]);
     const { isDark } = useTheme();
@@ -27,21 +24,16 @@ export default function Pricing() {
     const [currentPlan, setCurrentPlan] = useState<PlanId>('starter');
 
     useEffect(() => {
-        const rawSession = localStorage.getItem('verilens_session');
-        if (!rawSession) {
+        const session = getValidSession<SessionUser>();
+        if (!session?.user) {
             setCurrentPlan('starter');
             return;
         }
 
-        try {
-            const session = JSON.parse(rawSession) as SessionData;
-            const plan = session.user?.subscription_plan;
-            if (plan === 'starter' || plan === 'pro' || plan === 'ultra') {
-                setCurrentPlan(plan);
-                return;
-            }
-        } catch {
-            // Keep starter as safe fallback when session is malformed.
+        const plan = session.user.subscription_plan;
+        if (plan === 'starter' || plan === 'pro' || plan === 'ultra') {
+            setCurrentPlan(plan);
+            return;
         }
 
         setCurrentPlan('starter');
@@ -68,8 +60,7 @@ export default function Pricing() {
             const payload = (await response.json()) as { checkout_url?: string; detail?: string };
 
             if (response.status === 401) {
-                localStorage.removeItem('verilens_token');
-                localStorage.removeItem('verilens_session');
+                clearAuthSession();
                 toast.error('Session expired. Please log in again.', { id: 'stripe-session-expired' });
                 navigate('/login');
                 return;

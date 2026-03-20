@@ -7,17 +7,13 @@ import Brand from '../components/Brand';
 import SoftBackdrop from '../components/SoftBackdrop';
 import { GhostButton, PrimaryButton } from '../components/Buttons';
 import { useTheme } from '../context/theme';
+import { clearAuthSession, getValidSession } from '../utils/session';
 
 interface SessionUser {
     full_name: string;
     email: string;
     profile_image?: string | null;
     subscription_plan?: 'starter' | 'pro' | 'ultra';
-}
-
-interface SessionData {
-    user?: SessionUser;
-    tokenType?: string;
 }
 
 interface AuthResponse {
@@ -82,28 +78,15 @@ export default function Profile() {
     const { isDark } = useTheme();
 
     useEffect(() => {
-        const rawSession = localStorage.getItem('verilens_session');
-        if (!rawSession) {
+        const session = getValidSession<SessionUser>();
+        if (!session?.user) {
             toast.error('Please log in to access your profile.');
             navigate('/login');
             return;
         }
 
-        try {
-            const session = JSON.parse(rawSession) as SessionData;
-            if (!session.user) {
-                toast.error('Session not found. Please log in again.');
-                navigate('/login');
-                return;
-            }
-            setUser(session.user);
-        } catch {
-            toast.error('Session is invalid. Please log in again.');
-            navigate('/login');
-            return;
-        } finally {
-            setLoading(false);
-        }
+        setUser(session.user);
+        setLoading(false);
     }, [navigate]);
 
     useEffect(() => {
@@ -234,8 +217,7 @@ export default function Profile() {
     };
 
     const handleExpiredSession = () => {
-        localStorage.removeItem('verilens_token');
-        localStorage.removeItem('verilens_session');
+        clearAuthSession();
         toast.error('Session expired. Please log in again.');
         navigate('/login');
     };
@@ -306,8 +288,7 @@ export default function Profile() {
     };
 
     const logout = () => {
-        localStorage.removeItem('verilens_token');
-        localStorage.removeItem('verilens_session');
+        clearAuthSession();
         toast.success('Logged out successfully.');
         navigate('/');
     };
