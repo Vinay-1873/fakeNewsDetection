@@ -71,6 +71,42 @@ export default function Demo() {
         return `${result.confidence.toFixed(1)}%`;
     }, [result]);
 
+    const verdictStyle = useMemo(() => {
+        if (!result) {
+            return {
+                icon: isDark ? 'text-gray-300' : 'text-slate-600',
+                badge: isDark
+                    ? 'text-gray-100 border-white/30 bg-white/10'
+                    : 'text-slate-700 border-slate-300 bg-slate-100',
+            };
+        }
+
+        if (result.verdict === 'FAKE') {
+            return {
+                icon: isDark ? 'text-amber-300' : 'text-amber-700',
+                badge: isDark
+                    ? 'text-amber-100 border-amber-300/50 bg-amber-700/25'
+                    : 'text-amber-900 border-amber-300 bg-amber-100',
+            };
+        }
+
+        if (result.verdict === 'REAL') {
+            return {
+                icon: isDark ? 'text-emerald-300' : 'text-emerald-700',
+                badge: isDark
+                    ? 'text-emerald-100 border-emerald-300/50 bg-emerald-700/25'
+                    : 'text-emerald-900 border-emerald-300 bg-emerald-100',
+            };
+        }
+
+        return {
+            icon: isDark ? 'text-gray-200' : 'text-slate-700',
+            badge: isDark
+                ? 'text-gray-100 border-white/30 bg-white/10'
+                : 'text-slate-700 border-slate-300 bg-slate-100',
+        };
+    }, [isDark, result]);
+
     const runPrediction = async () => {
         if (!text.trim()) {
             const message = 'Please enter a headline or article text first.';
@@ -205,24 +241,17 @@ export default function Demo() {
                         {result && (
                             <div className="mt-5 space-y-4">
                                 <div className={`flex items-center justify-between rounded-xl border p-4 ${
-                                    isDark ? 'bg-black/30 border-white/10' : 'bg-slate-50 border-slate-200'
+                                    isDark ? 'bg-black/30 border-white/15' : 'bg-white border-slate-300'
                                 }`}>
                                     <div className="flex items-center gap-2">
                                         {result.verdict === 'FAKE' ? (
-                                            <AlertTriangleIcon className="size-5 text-amber-300" />
+                                            <AlertTriangleIcon className={`size-5 ${verdictStyle.icon}`} />
                                         ) : (
-                                            <CheckCircle2Icon className="size-5 text-emerald-300" />
+                                            <CheckCircle2Icon className={`size-5 ${verdictStyle.icon}`} />
                                         )}
-                                        <p className={`text-sm ${isDark ? 'text-gray-300' : 'text-slate-600'}`}>Verdict</p>
+                                        <p className={`text-sm font-medium ${isDark ? 'text-gray-200' : 'text-slate-700'}`}>Verdict</p>
                                     </div>
-                                    <span className={`text-xs px-3 py-1 rounded-full border ${result.verdict === 'FAKE'
-                                        ? 'text-amber-200 border-amber-300/40 bg-amber-700/20'
-                                        : result.verdict === 'REAL'
-                                            ? 'text-emerald-200 border-emerald-300/40 bg-emerald-700/20'
-                                            : isDark
-                                                ? 'text-gray-200 border-white/30 bg-white/10'
-                                                : 'text-slate-600 border-slate-300 bg-slate-100'
-                                        }`}>
+                                    <span className={`text-xs px-3 py-1 rounded-full border font-semibold tracking-wide ${verdictStyle.badge}`}>
                                         {result.verdict}
                                     </span>
                                 </div>
