@@ -212,9 +212,6 @@ export default function Demo() {
                             </GhostButton>
                         </div>
 
-                        <p className={`mt-4 text-xs ${isDark ? 'text-gray-400' : 'text-slate-500'}`}>
-                            Endpoint: {API_ENDPOINT}
-                        </p>
                     </motion.div>
 
                     <motion.div
